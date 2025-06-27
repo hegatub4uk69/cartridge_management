@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .models import Staff
+from .models import Staff, Cartridges
 
 
 def get_staff_id(cookie):
@@ -60,3 +60,12 @@ def logout_user(request):
 @login_required()
 def user_verify(request):
     return JsonResponse({"result": 'true'})
+
+@login_required()
+def get_cartridges_data(request):
+    result = [{
+        "id": i.pk,
+        "model": i.model,
+        "department": i.department.name,
+    } for i in Cartridges.objects.all()]
+    return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})

@@ -113,7 +113,7 @@
     computed: mapState(['isAuthenticated', 'user_data']),
 
     data: () => ({
-      app_name: 'Сервисный центр',
+      app_name: 'Управление картриджами',
       user: {
         fullName: 'Test Test',
         post: 'Test',
