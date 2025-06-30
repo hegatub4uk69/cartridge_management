@@ -25,11 +25,11 @@ class DepartmentsAdmin(admin.ModelAdmin):
 
 @admin.register(Cartridges)
 class CartridgesAdmin(admin.ModelAdmin):
-    list_display = ('id', 'model', 'department', 'description', 'date_added')
+    list_display = ('id', 'model', 'department', 'description', 'date_of_last_location', 'date_added')
     list_display_links = ('id',)
     search_fields = ('id', 'model', 'department', 'description')
-    list_editable = ('model', 'department', 'description')
-    list_filter = ('model', 'department', 'description', 'date_added')
+    list_editable = ('model', 'department', 'description', 'date_of_last_location')
+    list_filter = ('model', 'department', 'description', 'date_added', 'date_of_last_location')
 
 @admin.register(Cartridges_History)
 class CartridgesHistoryAdmin(admin.ModelAdmin):
