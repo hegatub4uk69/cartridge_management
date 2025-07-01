@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import Staff, Departments, Cartridges, Cartridges_History, Printers, Cartridges_Printers
+from .models import Staff, Departments, Cartridges, Cartridges_History, Printers, Cartridges_Printers, Cartridge_Models
 
 
 class StaffInline(admin.StackedInline):
@@ -17,6 +17,14 @@ admin.site.register(User, UserAdmin)
 
 @admin.register(Departments)
 class DepartmentsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    list_display_links = ('id',)
+    search_fields = ('id', 'name')
+    list_editable = ('name',)
+    list_filter = ('name',)
+
+@admin.register(Cartridge_Models)
+class CartridgeModelsAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     list_display_links = ('id',)
     search_fields = ('id', 'name')

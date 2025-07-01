@@ -8,6 +8,7 @@ urlpatterns = [
     path('user-verify', views.user_verify),
 
     path('get-cartridges-data', views.get_cartridges_data),
+    path('get-cartridge-models', views.get_cartridge_models),
     path('get-departments', views.get_departments),
 
     path('add-new-cartridge', views.add_new_cartridge),

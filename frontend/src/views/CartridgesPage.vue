@@ -66,16 +66,16 @@
             <v-card title="Добавление нового картриджа">
               <template #prepend>
                 <v-icon
-                  icon="mdi-new-box"
                   color="primary"
+                  icon="mdi-new-box"
                   size="x-large"
                 />
               </template>
               <template #append>
                 <v-icon
+                  color="red"
                   icon="mdi-close-outline"
                   size="large"
-                  color="red"
                   @click="closeAddNewCartridge"
                 />
               </template>
@@ -83,27 +83,96 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <v-text-field
-                        v-model="new_cartridge_data.model"
+                      <v-autocomplete
+                        v-model="new_cartridge_data.model_id"
+                        density="comfortable"
+                        item-title="name"
+                        item-value="id"
+                        :items="cartridge_models"
                         label="Модель картриджа"
-                        :rules="[required]"
                       />
                     </v-row>
                     <v-row>
-                      <v-select
+                      <v-autocomplete
                         v-model="new_cartridge_data.department_id"
+                        density="comfortable"
                         item-title="name"
                         item-value="id"
                         :items="departments"
                         label="Отдел/отделение"
-                        :rules="[required]"
                       />
                     </v-row>
                     <v-row>
                       <v-textarea
                         v-model="new_cartridge_data.description"
+                        density="comfortable"
                         label="Описание"
                       />
+                    </v-row>
+                    <v-row>
+                      <v-card class="mx-auto" width="700px">
+                        <v-toolbar>
+                          <v-btn
+                            class="mx-auto"
+                            prepend-icon="mdi-plus"
+                            text="Добавить новый элемент"
+                            variant="tonal"
+                            @click="addNewCartridgeToList"
+                          />
+                        </v-toolbar>
+                        <v-list
+                          id="list"
+                          class="overflow-y-auto"
+                          clearable="true"
+                          density="compact"
+                          lines="two"
+                          nav
+                          style="max-height: 450px"
+                        >
+                          <v-list-item
+                            v-for="(item, i) in new_cartridges"
+                            :key="i"
+                            color="primary"
+                            :value="item"
+                          >
+                            <template #prepend>
+                              <v-icon
+                                icon="mdi-text-box-outline"
+                                style="font-size: 40px"
+                              />
+                            </template>
+                            <template #title>
+                              <v-list-item-title style="font-size: 18px">{{ getCartridgeItemById(item.model_id).name }}</v-list-item-title>
+                            </template>
+                            <template #subtitle>
+                              <v-list-item-subtitle style="font-size: 15px">{{ item.description }}</v-list-item-subtitle>
+                            </template>
+                            <template #append>
+                              <v-list-item-action class="flex-column align-end">
+                                <v-spacer />
+                                <v-row>
+                                  <v-number-input
+                                    v-model="item.count"
+                                    control-variant="stacked"
+                                    density="compact"
+                                    hide-details
+                                    :min="1"
+                                    :model-value="item.count"
+                                    @click.stop
+                                  />
+                                  <v-icon
+                                    class="my-auto mx-2"
+                                    color="red"
+                                    icon="mdi-close-outline"
+                                    size="x-large"
+                                    @click.stop="removeNewCartridgeItem(i)"
+                                  />
+                                </v-row>
+                              </v-list-item-action>
+                            </template>
+                          </v-list-item>
+                        </v-list>
+                      </v-card>
                     </v-row>
                   </v-container>
                 </v-card-text>
@@ -117,7 +186,6 @@
                   />
                   <v-btn
                     color="blue-darken-1"
-                    :disabled="!validation_new_cartridge"
                     text="Добавить"
                     type="submit"
                     variant="text"
@@ -180,15 +248,18 @@
           { title: 'Действия', key: 'actions', sortable: false },
         ],
         loadingCartridgesTable: true,
+        cartridge_models: [],
         cartridges: [],
         departments: [],
         validation_new_cartridge: false,
         dialog_new_cartridge: false,
         new_cartridge_data: {
-          model: '',
+          model_id: null,
           department_id: null,
           description: '',
+          count: null,
         },
+        new_cartridges: [],
       }
     },
 
@@ -198,6 +269,7 @@
           this.closeAddNewCartridge()
         } else {
           this.loadDepartments()
+          this.loadCartridgeModels()
         }
       },
     },
@@ -209,6 +281,13 @@
           .then(response => {
             this.cartridges = response.data.result
             this.loadingCartridgesTable = false
+          })
+      },
+
+      loadCartridgeModels () {
+        API.post('get-cartridge-models')
+          .then(response => {
+            this.cartridge_models = response.data.result
           })
       },
 
@@ -225,10 +304,24 @@
       closeAddNewCartridge () {
         this.dialog_new_cartridge = false
         this.departments = []
+        this.cartridge_models = []
         this.new_cartridge_data = {}
+        this.new_cartridges = []
+      },
+      addNewCartridgeToList () {
+        if (this.new_cartridge_data.model_id && this.new_cartridge_data.department_id) {
+          const newItem = {
+            ...this.new_cartridge_data,
+            count: 1,
+          }
+          this.new_cartridges.push(newItem)
+        }
+      },
+      removeNewCartridgeItem (index) {
+        this.new_cartridges.splice(index, 1)
       },
       addNewCartridge () {
-        API.post('add-new-cartridge', this.new_cartridge_data)
+        API.post('add-new-cartridge', this.new_cartridges)
           .then(response => {
             createToast(response.data.result, {
               showIcon: 'true',
@@ -241,6 +334,10 @@
             this.loadCartridgesData()
           })
         this.closeAddNewCartridge()
+      },
+
+      getCartridgeItemById (id) {
+        return this.cartridge_models.find(item => item.id === id)
       },
 
       required (value) {
@@ -262,5 +359,12 @@
 .table_toolbar {
   border-top-right-radius: 5px;
   border-top-left-radius: 5px;
+}
+.non-clickable-list-item {
+  pointer-events: none;
+  cursor: default;
+}
+.non-clickable-list-item:hover::before {
+  opacity: 0 !important;
 }
 </style>

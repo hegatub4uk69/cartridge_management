@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from .models import Staff, Cartridges, Departments
+from .models import Staff, Cartridges, Departments, Cartridge_Models
 
 
 def get_staff_id(cookie):
@@ -68,7 +68,7 @@ def user_verify(request):
 def get_cartridges_data(request):
     result = [{
         "id": c.pk,
-        "model": c.model,
+        "model": c.model.name,
         "department": c.department.name,
         "date_of_last_location": f'{c.date_of_last_location.astimezone(pytz.timezone("Asia/Irkutsk")).date().strftime("%d.%m.%Y")} '
                      f'{c.date_of_last_location.astimezone(pytz.timezone("Asia/Irkutsk")).time().strftime("%H:%M:%S")}',
@@ -84,13 +84,26 @@ def get_departments(request):
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()
+def get_cartridge_models(request):
+    result = [{
+        "id": cm.pk,
+        "name": cm.name,
+    } for cm in Cartridge_Models.objects.all()]
+    return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
+
+
+@login_required()
 def add_new_cartridge(request):
-    data = json.loads(request.body.decode())
-    cartridge = Cartridges(
-        model=data['model'],
-        department_id=data['department_id'],
-        description=data['description'],
-        date_of_last_location=timezone.now(),
-    )
-    cartridge.save()
-    return JsonResponse({"result": 'Данные о новом картридже успешно добавлены!'})
+    # data = json.loads(request.body.decode())
+    # i=0
+    # print(data)
+    # for item in data:
+    #     cartridge = Cartridges(
+    #         model_id=item['model_id'],
+    #         department_id=item['department_id'],
+    #         description=item['description'],
+    #         date_of_last_location=timezone.now(),
+    #     )
+    #     while i <= item['count']:
+    #         i += 1
+    #         print(item['count'])
