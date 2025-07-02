@@ -186,6 +186,7 @@
                   />
                   <v-btn
                     color="blue-darken-1"
+                    :disabled="isNewCartridgesListEmpty"
                     text="Добавить"
                     type="submit"
                     variant="text"
@@ -224,6 +225,7 @@
       </template>
     </v-data-table>
 
+
   </v-container>
   <v-container>
     <!--    -->
@@ -261,6 +263,12 @@
         },
         new_cartridges: [],
       }
+    },
+
+    computed: {
+      isNewCartridgesListEmpty () {
+        return this.new_cartridges.length === 0
+      },
     },
 
     watch: {

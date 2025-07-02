@@ -1,6 +1,7 @@
 import json
 
 import pytz
+from django.db import transaction
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.sessions.models import Session
@@ -94,16 +95,19 @@ def get_cartridge_models(request):
 
 @login_required()
 def add_new_cartridge(request):
-    # data = json.loads(request.body.decode())
-    # i=0
-    # print(data)
-    # for item in data:
-    #     cartridge = Cartridges(
-    #         model_id=item['model_id'],
-    #         department_id=item['department_id'],
-    #         description=item['description'],
-    #         date_of_last_location=timezone.now(),
-    #     )
-    #     while i <= item['count']:
-    #         i += 1
-    #         print(item['count'])
+    data = json.loads(request.body.decode())
+    created_items = []
+
+    with transaction.atomic():
+        for item in data:
+            for _ in range(item['count']):
+                cartridge = Cartridges(
+                    model_id=item['model_id'],
+                    department_id=item['department_id'],
+                    description=item['description'] if 'description' in item is not None or '' else None,
+                    date_of_last_location=timezone.now(),
+                )
+                cartridge.save()
+                created_items.append({"cartridge": f"{cartridge.model.name} ID_{cartridge.pk}"})
+
+    return JsonResponse({"result": created_items})
