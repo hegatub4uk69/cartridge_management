@@ -2,6 +2,7 @@ import json
 
 import pytz
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.sessions.models import Session
@@ -67,13 +68,20 @@ def user_verify(request):
 
 @login_required()
 def get_cartridges_data(request):
+    data = json.loads(request.body.decode())
+    cartridges = Cartridges.objects.all()
+    if data['model_id'] is not None or '':
+        cartridges = cartridges.filter(model_id=data['model_id'])
+    if data['department_id'] is not None or '':
+        cartridges = cartridges.filter(department_id=data['department_id'])
+
     result = [{
         "id": c.pk,
         "model": c.model.name,
         "department": c.department.name,
         "date_of_last_location": f'{c.date_of_last_location.astimezone(pytz.timezone("Asia/Irkutsk")).date().strftime("%d.%m.%Y")} '
                      f'{c.date_of_last_location.astimezone(pytz.timezone("Asia/Irkutsk")).time().strftime("%H:%M:%S")}',
-    } for c in Cartridges.objects.all()]
+    } for c in cartridges.select_related('model', 'department')]
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()

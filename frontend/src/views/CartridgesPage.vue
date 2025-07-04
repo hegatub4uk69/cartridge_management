@@ -11,8 +11,26 @@
         </div>
         <v-col>
           <div class="d-flex flex-nowrap">
-            <v-select class="pr-2" hide-details />
-            <v-select hide-details />
+            <v-autocomplete
+              v-model="cartridge_model_filter"
+              class="pr-2"
+              density="comfortable"
+              hide-details
+              item-title="name"
+              item-value="id"
+              :items="cartridge_models"
+              label="Модель картриджа"
+            />
+            <v-autocomplete
+              v-model="department_filter"
+              class="pr-2"
+              density="comfortable"
+              hide-details
+              item-title="name"
+              item-value="id"
+              :items="departments"
+              label="Местоположение"
+            />
           </div>
         </v-col>
       </v-row>
@@ -27,7 +45,6 @@
       :items="cartridges"
       :loading="loadingCartridgesTable"
       :search="table_cartridges_search"
-      @update:options="loadCartridgesData"
     >
       <template #top>
         <v-toolbar class="table_toolbar" color="white" flat>
@@ -56,7 +73,8 @@
               prepend-icon="mdi-plus"
               variant="outlined"
               @click="openDialogAddNewCartridge"
-            >НОВЫЙ</v-btn>
+            >НОВЫЙ
+            </v-btn>
           </v-col>
           <!--Диалоговое окно добавления нового картриджа-->
           <v-dialog
@@ -76,7 +94,7 @@
                   color="red"
                   icon="mdi-close-outline"
                   size="large"
-                  @click="closeAddNewCartridge"
+                  @click="this.dialog_new_cartridge = false"
                 />
               </template>
               <v-form v-model="validation_new_cartridge" @submit.prevent="addNewCartridge">
@@ -142,10 +160,16 @@
                               />
                             </template>
                             <template #title>
-                              <v-list-item-title style="font-size: 18px">{{ getCartridgeItemById(item.model_id).name }}</v-list-item-title>
+                              <v-list-item-title style="font-size: 18px">{{
+                                getCartridgeItemById(item.model_id).name
+                              }}
+                              </v-list-item-title>
                             </template>
                             <template #subtitle>
-                              <v-list-item-subtitle style="font-size: 15px">{{ item.description }}</v-list-item-subtitle>
+                              <v-list-item-subtitle style="font-size: 15px">{{
+                                item.description
+                              }}
+                              </v-list-item-subtitle>
                             </template>
                             <template #append>
                               <v-list-item-action class="flex-column align-end">
@@ -182,7 +206,7 @@
                     color="blue-darken-1"
                     text="Закрыть"
                     variant="text"
-                    @click="closeAddNewCartridge"
+                    @click="this.dialog_new_cartridge = false"
                   />
                   <v-btn
                     color="blue-darken-1"
@@ -250,9 +274,19 @@
           { title: 'Действия', key: 'actions', sortable: false },
         ],
         loadingCartridgesTable: true,
-        cartridge_models: [],
+        cartridge_models: [
+          {
+            id: null,
+            name: 'Все',
+          },
+        ],
         cartridges: [],
-        departments: [],
+        departments: [
+          {
+            id: null,
+            name: 'Все',
+          },
+        ],
         validation_new_cartridge: false,
         dialog_new_cartridge: false,
         new_cartridge_data: {
@@ -262,6 +296,8 @@
           count: null,
         },
         new_cartridges: [],
+        cartridge_model_filter: null,
+        department_filter: null,
       }
     },
 
@@ -272,6 +308,12 @@
     },
 
     watch: {
+      cartridge_model_filter () {
+        this.loadCartridgesData()
+      },
+      department_filter () {
+        this.loadCartridgesData()
+      },
       dialog_new_cartridge () {
         if (!this.dialog_new_cartridge) {
           this.closeAddNewCartridge()
@@ -282,27 +324,50 @@
       },
     },
 
+    created () {
+      this.loadCartridgeModels('main')
+      this.loadDepartments('main')
+      this.loadCartridgesData()
+    },
+
     methods: {
       loadCartridgesData () {
         this.loadingCartridgesTable = true
-        API.post('get-cartridges-data')
+        API.post('get-cartridges-data', {
+          model_id: this.cartridge_model_filter,
+          department_id: this.department_filter,
+        })
           .then(response => {
             this.cartridges = response.data.result
             this.loadingCartridgesTable = false
           })
       },
 
-      loadCartridgeModels () {
+      loadCartridgeModels (option=null) {
         API.post('get-cartridge-models')
           .then(response => {
-            this.cartridge_models = response.data.result
+            if (option === 'main') {
+              for (const item of response.data.result) {
+                this.cartridge_models.push(item)
+              }
+            }
+            if (option === null) {
+              this.cartridge_models = response.data.result
+            }
           })
       },
 
-      loadDepartments () {
+      loadDepartments (option=null) {
         API.post('get-departments')
           .then(response => {
-            this.departments = response.data.result
+            if (option === 'main') {
+              for (const item of response.data.result) {
+                this.departments.push(item)
+              }
+            }
+            if (option === null) {
+              this.departments = response.data.result
+            }
           })
       },
 
@@ -311,10 +376,19 @@
       },
       closeAddNewCartridge () {
         this.dialog_new_cartridge = false
-        this.departments = []
-        this.cartridge_models = []
+        this.departments = [{ id: null, name: 'Все' }]
+        this.cartridge_models = [{ id: null, name: 'Все' }]
         this.new_cartridge_data = {}
         this.new_cartridges = []
+
+        const current_cartridge_model = this.cartridge_model_filter
+        this.loadCartridgeModels('main')
+        this.cartridge_model_filter = current_cartridge_model
+        const current_department = this.department_filter
+        this.loadDepartments('main')
+        this.department_filter = current_department
+
+        this.loadCartridgesData()
       },
       addNewCartridgeToList () {
         if (this.new_cartridge_data.model_id && this.new_cartridge_data.department_id) {
@@ -339,9 +413,8 @@
               timeout: 3000,
               toastBackgroundColor: '#4caf50',
             })
-            this.loadCartridgesData()
+            this.dialog_new_cartridge = false
           })
-        this.closeAddNewCartridge()
       },
 
       getCartridgeItemById (id) {
@@ -364,15 +437,9 @@
   border-bottom-right-radius: 5px;
   font-size: 16px;
 }
+
 .table_toolbar {
   border-top-right-radius: 5px;
   border-top-left-radius: 5px;
-}
-.non-clickable-list-item {
-  pointer-events: none;
-  cursor: default;
-}
-.non-clickable-list-item:hover::before {
-  opacity: 0 !important;
 }
 </style>
