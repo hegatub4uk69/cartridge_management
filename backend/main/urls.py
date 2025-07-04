@@ -12,4 +12,5 @@ urlpatterns = [
     path('get-departments', views.get_departments),
 
     path('add-new-cartridge', views.add_new_cartridge),
+    path('generate-barcode-pdf', views.generate_barcode_pdf),
 ]

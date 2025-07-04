@@ -94,7 +94,7 @@
                   color="red"
                   icon="mdi-close-outline"
                   size="large"
-                  @click="this.dialog_new_cartridge = false"
+                  @click="dialog_new_cartridge = false"
                 />
               </template>
               <v-form v-model="validation_new_cartridge" @submit.prevent="addNewCartridge">
@@ -206,7 +206,7 @@
                     color="blue-darken-1"
                     text="Закрыть"
                     variant="text"
-                    @click="this.dialog_new_cartridge = false"
+                    @click="dialog_new_cartridge = false"
                   />
                   <v-btn
                     color="blue-darken-1"
@@ -229,6 +229,7 @@
           color="purple"
           icon="mdi-barcode-scan"
           size="large"
+          @click="generatePDF(item.model, item.id)"
         />
         <v-icon
           class="mr-2"
@@ -249,10 +250,9 @@
       </template>
     </v-data-table>
 
-
   </v-container>
   <v-container>
-    <!--    -->
+    <!--#-->
   </v-container>
   <!--#-->
 </template>
@@ -419,6 +419,28 @@
 
       getCartridgeItemById (id) {
         return this.cartridge_models.find(item => item.id === id)
+      },
+
+      async generatePDF (cartridge_model, cartridge_id) {
+        try {
+          const response = await API.post('generate-barcode-pdf', {
+            model: cartridge_model,
+            id: cartridge_id.toString(),
+          }, {
+            responseType: 'blob', // Важно для получения бинарных данных
+          });
+
+          // Создаем URL для blob
+          const blob = new Blob([response.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob)
+          window.open(url, '_blank')
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url)
+          }, 1000)
+
+        } catch (error) {
+          console.error('Ошибка при генерации PDF:', error);
+        }
       },
 
       required (value) {

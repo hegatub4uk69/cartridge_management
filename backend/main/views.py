@@ -4,7 +4,7 @@ import pytz
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.sessions.models import Session
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -12,6 +12,14 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from .models import Staff, Cartridges, Departments, Cartridge_Models
+from reportlab.graphics.barcode import code128, code39
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.fonts import addMapping
+from io import BytesIO
 
 
 def get_staff_id(cookie):
@@ -119,3 +127,62 @@ def add_new_cartridge(request):
                 created_items.append({"cartridge": f"{cartridge.model.name} ID_{cartridge.pk}"})
 
     return JsonResponse({"result": created_items})
+
+@login_required()
+def generate_barcode_pdf(request):
+    data = json.loads(request.body.decode())
+    # print(data['model'], data['id'])
+    # Устанавливаем размер страницы 43x25 мм
+    page_width = 43 * mm
+    page_height = 25 * mm
+
+    # Создаем буфер для PDF
+    buffer = BytesIO()
+
+    # Создаем PDF документ с нужным размером
+    p = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+
+    # Настройки шрифтов
+    p.setFont("Helvetica", 6)
+
+    # 1. Добавляем заголовок сверху
+    title = data['model']
+    title_width = p.stringWidth(title, "Helvetica", 6)
+    p.drawString((page_width - title_width) / 2, page_height - 4 * mm, title)
+
+    # 2. Генерируем штрихкод Code128
+    barcode_value = data['id']  # Можно получать из параметров
+
+    # Создаем штрихкод с подходящими размерами для маленькой этикетки
+    barcode = code128.Code128(
+        barcode_value,
+        barHeight=14 * mm,  # Высота штрихов
+        barWidth=0.45 * mm,  # Толщина штрихов
+        humanReadable=False  # Текст будем выводить отдельно
+    )
+
+    # Центрируем штрихкод по горизонтали
+    barcode_x = (page_width - barcode.width) / 2
+    barcode_y = page_height - 20 * mm
+
+    # Рисуем штрихкод
+    barcode.drawOn(p, barcode_x, barcode_y)
+
+    # 3. Добавляем значение штрихкода снизу
+    p.setFont("Helvetica", 5)  # Меньший шрифт для значения
+    value_width = p.stringWidth(barcode_value, "Helvetica", 5)
+    p.drawString((page_width - value_width) / 2, 2 * mm, barcode_value)
+
+    # Завершаем создание PDF
+    p.showPage()
+    p.save()
+
+    # Получаем содержимое буфера
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    # Создаем ответ с PDF
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="example.pdf"'
+
+    return response
