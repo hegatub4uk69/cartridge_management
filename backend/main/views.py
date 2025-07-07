@@ -93,6 +93,16 @@ def get_cartridges_data(request):
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()
+def get_cartridge_data_to_edit(request):
+    data = json.loads(request.body.decode())
+    result = [{
+        "model_id": c.model_id,
+        "department_id": c.department_id,
+        "description": c.description,
+    } for c in Cartridges.objects.all().filter(pk=data['id'])]
+    return JsonResponse({"result": result})
+
+@login_required()
 def get_departments(request):
     result = [{
         "id": d.pk,
@@ -127,6 +137,17 @@ def add_new_cartridge(request):
                 created_items.append({"cartridge": f"{cartridge.model.name} ID_{cartridge.pk}"})
 
     return JsonResponse({"result": created_items})
+
+@login_required()
+def update_cartridge_data(request):
+    data = json.loads(request.body.decode())
+    cartridge = Cartridges.objects.get(pk=data['id'])
+    cartridge.model_id = data['model_id']
+    cartridge.department_id = data['department_id']
+    cartridge.description = data['description']
+    cartridge.date_of_last_location = timezone.now()
+    cartridge.save()
+    return JsonResponse({"result": f'Данные о картридже №{data['id']} успешно изменены!'})
 
 @login_required()
 def generate_barcode_pdf(request):

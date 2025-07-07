@@ -1,15 +1,26 @@
 <template>
-  <v-container fluid>
+  <v-container class="pb-0" fluid>
     <v-card>
-      <v-row align="center" dense justify="center" style="padding: 10px">
-        <div class="d-flex">
-          <v-col>
-            <v-btn class="mr-2" color="primary" size="x-large" variant="tonal">Выдача картриджей</v-btn>
-            <v-btn class="mr-2" color="primary" size="x-large" variant="tonal">Отправка на заправку</v-btn>
-            <v-btn color="primary" size="x-large" variant="tonal">Списание картриджей</v-btn>
-          </v-col>
-        </div>
+      <v-row align="center" dense style="padding: 10px">
+        <v-col cols="3">
+          <div class="d-flex flex-column">
+            <v-btn class="mb-1 text-truncate" color="primary" size="x-large" variant="tonal">Списание картриджей</v-btn>
+            <v-btn class="text-truncate" color="primary" size="x-large" variant="tonal">Выдача картриджей</v-btn>
+          </div>
+        </v-col>
+        <v-col cols="3">
+          <div class="d-flex flex-column">
+            <v-btn class="mb-1 text-truncate" color="primary" size="x-large" variant="tonal">Отправка на заправку</v-btn>
+            <v-btn class="text-truncate" color="primary" size="x-large" variant="tonal">Необходима заправка</v-btn>
+          </div>
+        </v-col>
         <v-col>
+          <v-checkbox
+            v-model="decommissioned_filter"
+            color="primary"
+            hide-details
+            label="Отображение списка исключительно списанных картриджей"
+          />
           <div class="d-flex flex-nowrap">
             <v-autocomplete
               v-model="cartridge_model_filter"
@@ -36,7 +47,7 @@
       </v-row>
     </v-card>
   </v-container>
-  <v-container fluid>
+  <v-container class="pt-3" fluid>
     <!--Таблица вывода информации о картриджах-->
     <v-data-table
       class="elevation-1 table"
@@ -76,6 +87,7 @@
             >НОВЫЙ
             </v-btn>
           </v-col>
+
           <!--Диалоговое окно добавления нового картриджа-->
           <v-dialog
             v-model="dialog_new_cartridge"
@@ -167,7 +179,7 @@
                             </template>
                             <template #subtitle>
                               <v-list-item-subtitle style="font-size: 15px">{{
-                                item.description
+                                getDepartmentItemById(item.department_id).name
                               }}
                               </v-list-item-subtitle>
                             </template>
@@ -241,6 +253,7 @@
           class="mr-2"
           color="orange"
           icon="mdi-pencil"
+          @click="openDialogEditCartridgeData(item.id)"
         />
         <v-icon
           class="mr-0"
@@ -249,7 +262,13 @@
         />
       </template>
     </v-data-table>
-
+    <!--Диалоговое окно изменения информации о картридже-->
+    <EditCartridgeInfo
+      v-model="dialog_edit_cartridge_data"
+      :cartridge_id="cartridge_id_to_edit"
+      @close-dialog="onCloseEditCartridgeData"
+      @confirm="onConfirmEditCartridgeData"
+    />
   </v-container>
   <v-container>
     <!--#-->
@@ -260,9 +279,13 @@
 <script>
   import API from '@/axios.js';
   import { createToast } from 'mosha-vue-toastify';
+  import EditCartridgeInfo from '@/dialogs/EditCartridgeInfo.vue';
 
   export default {
     name: 'CartridgesPage',
+    components: {
+      EditCartridgeInfo,
+    },
     data () {
       return {
         table_cartridges_search: '',
@@ -288,6 +311,8 @@
           },
         ],
         validation_new_cartridge: false,
+        dialog_edit_cartridge_data: false,
+        cartridge_id_to_edit: null,
         dialog_new_cartridge: false,
         new_cartridge_data: {
           model_id: null,
@@ -296,6 +321,7 @@
           count: null,
         },
         new_cartridges: [],
+        decommissioned_filter: false,
         cartridge_model_filter: null,
         department_filter: null,
       }
@@ -370,12 +396,7 @@
             }
           })
       },
-
-      openDialogAddNewCartridge () {
-        this.dialog_new_cartridge = true
-      },
-      closeAddNewCartridge () {
-        this.dialog_new_cartridge = false
+      updateMainData () {
         this.departments = [{ id: null, name: 'Все' }]
         this.cartridge_models = [{ id: null, name: 'Все' }]
         this.new_cartridge_data = {}
@@ -389,6 +410,35 @@
         this.department_filter = current_department
 
         this.loadCartridgesData()
+      },
+
+      openDialogEditCartridgeData (id) {
+        this.cartridge_id_to_edit = id
+        this.dialog_edit_cartridge_data = true
+      },
+      onConfirmEditCartridgeData (value) {
+        this.dialog_edit_cartridge_data = false
+        createToast(value, {
+          showIcon: 'true',
+          showCloseButton: false,
+          type: 'success',
+          position: 'top-center',
+          timeout: 3000,
+          toastBackgroundColor: '#4caf50',
+        })
+        this.updateMainData()
+      },
+      onCloseEditCartridgeData () {
+        this.dialog_edit_cartridge_data = false
+        this.updateMainData()
+      },
+
+      openDialogAddNewCartridge () {
+        this.dialog_new_cartridge = true
+      },
+      closeAddNewCartridge () {
+        this.dialog_new_cartridge = false
+        this.updateMainData()
       },
       addNewCartridgeToList () {
         if (this.new_cartridge_data.model_id && this.new_cartridge_data.department_id) {
@@ -419,6 +469,9 @@
 
       getCartridgeItemById (id) {
         return this.cartridge_models.find(item => item.id === id)
+      },
+      getDepartmentItemById (id) {
+        return this.departments.find(item => item.id === id)
       },
 
       async generatePDF (cartridge_model, cartridge_id) {
