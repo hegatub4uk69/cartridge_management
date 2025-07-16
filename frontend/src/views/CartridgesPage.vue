@@ -5,7 +5,13 @@
         <v-col cols="3">
           <div class="d-flex flex-column">
             <v-btn class="mb-1 text-truncate" color="primary" size="x-large" variant="tonal">Списание картриджей</v-btn>
-            <v-btn class="text-truncate" color="primary" size="x-large" variant="tonal">Выдача картриджей</v-btn>
+            <v-btn
+              class="text-truncate"
+              color="primary"
+              size="x-large"
+              variant="tonal"
+              @click="openDialogCartridgeActions('issuance')"
+            >Выдача картриджей</v-btn>
           </div>
         </v-col>
         <v-col cols="3">
@@ -255,11 +261,6 @@
           icon="mdi-pencil"
           @click="openDialogEditCartridgeData(item.id)"
         />
-        <v-icon
-          class="mr-0"
-          color="red"
-          icon="mdi-delete-outline"
-        />
       </template>
     </v-data-table>
     <!--Диалоговое окно изменения информации о картридже-->
@@ -269,22 +270,26 @@
       @close-dialog="onCloseEditCartridgeData"
       @confirm="onConfirmEditCartridgeData"
     />
+    <CartridgeActions
+      v-model="dialog_cartridge_actions"
+      :option="cartridge_actions_option"
+      @close-dialog="onCloseCartridgeActions"
+      @confirm="onConfirmCartridgeActions"
+    />
   </v-container>
-  <v-container>
-    <!--#-->
-  </v-container>
-  <!--#-->
 </template>
 
 <script>
   import API from '@/axios.js';
   import { createToast } from 'mosha-vue-toastify';
   import EditCartridgeInfo from '@/dialogs/EditCartridgeInfo.vue';
+  import CartridgeActions from '@/dialogs/CartridgeActions.vue';
 
   export default {
     name: 'CartridgesPage',
     components: {
       EditCartridgeInfo,
+      CartridgeActions,
     },
     data () {
       return {
@@ -312,6 +317,8 @@
         ],
         validation_new_cartridge: false,
         dialog_edit_cartridge_data: false,
+        dialog_cartridge_actions: false,
+        cartridge_actions_option: 'issuance',
         cartridge_id_to_edit: null,
         dialog_new_cartridge: false,
         new_cartridge_data: {
@@ -430,6 +437,19 @@
       },
       onCloseEditCartridgeData () {
         this.dialog_edit_cartridge_data = false
+        this.updateMainData()
+      },
+
+      openDialogCartridgeActions (option) {
+        this.cartridge_actions_option = option
+        this.dialog_cartridge_actions = true
+      },
+      onConfirmCartridgeActions () {
+        this.dialog_cartridge_actions = false
+        this.updateMainData()
+      },
+      onCloseCartridgeActions () {
+        this.dialog_cartridge_actions = false
         this.updateMainData()
       },
 

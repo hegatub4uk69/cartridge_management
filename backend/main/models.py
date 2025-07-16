@@ -52,7 +52,7 @@ class Printers(models.Model):
         return self.name
 
 class Cartridges_Printers(models.Model):
-    cartridge = models.ForeignKey(Cartridges, related_name='Cartridges_Printers_cartridge_id', on_delete=models.SET_NULL, null=True, blank=True)
+    cartridge_model = models.ForeignKey(Cartridge_Models, related_name='Cartridges_Printers_cartridge_model_id', on_delete=models.SET_NULL, null=True, blank=True)
     printer = models.ForeignKey(Printers, related_name='Cartridges_Printers_printer_id', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):

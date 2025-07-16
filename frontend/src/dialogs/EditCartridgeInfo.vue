@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" max-width="700px">
+  <v-dialog max-width="700px">
     <v-card title="Изменение информации о картридже">
       <template #prepend>
         <v-icon
@@ -61,7 +61,7 @@
           <v-btn
             color="blue-darken-1"
             :disabled="!validation"
-            text="Добавить"
+            text="Изменить"
             type="submit"
             variant="text"
           />
@@ -85,7 +85,6 @@
 
     data () {
       return {
-        dialog: undefined,
         validation: false,
         new_cartridge_data_to_edit: {
           id: null,

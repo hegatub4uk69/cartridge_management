@@ -57,8 +57,8 @@ class PrintersAdmin(admin.ModelAdmin):
 
 @admin.register(Cartridges_Printers)
 class CartridgesPrintersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cartridge', 'printer')
+    list_display = ('id', 'cartridge_model', 'printer')
     list_display_links = ('id',)
-    search_fields = ('id', 'cartridge', 'printer')
-    list_editable = ('cartridge', 'printer')
-    list_filter = ('cartridge', 'printer')
+    search_fields = ('id', 'cartridge_model', 'printer')
+    list_editable = ('cartridge_model', 'printer')
+    list_filter = ('cartridge_model', 'printer')

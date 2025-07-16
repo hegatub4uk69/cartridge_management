@@ -11,6 +11,7 @@ urlpatterns = [
     path('get-cartridge-data-to-edit', views.get_cartridge_data_to_edit),
     path('get-cartridge-models', views.get_cartridge_models),
     path('get-departments', views.get_departments),
+    path('get-the-found-cartridges', views.get_the_found_cartridges),
 
     path('add-new-cartridge', views.add_new_cartridge),
 

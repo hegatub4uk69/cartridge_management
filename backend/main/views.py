@@ -1,8 +1,10 @@
 import json
+from xmlrpc.client import ResponseError
 
 import pytz
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.expressions import result
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.sessions.models import Session
@@ -118,6 +120,14 @@ def get_cartridge_models(request):
     } for cm in Cartridge_Models.objects.all()]
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
+@login_required()
+def get_the_found_cartridges(request):
+    data = json.loads(request.body.decode())
+    result = [{
+        "id": c.pk,
+        "name": c.model.name,
+    } for c in Cartridges.objects.all().filter(pk=data['id'])]
+    return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()
 def add_new_cartridge(request):
