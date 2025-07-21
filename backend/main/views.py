@@ -45,6 +45,8 @@ def auth(request):
             # log = Actions_Logs(key=None, type=0, staff_id=staff.pk, data=None)
             # log.save()
             return JsonResponse({"result": 'Авторизация прошла успешно!'})
+    else:
+        return HttpResponse('Unauthorized', status=401)
 
 # Получение данных пользователя на основе session cookie
 @login_required
