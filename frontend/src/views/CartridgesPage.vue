@@ -282,6 +282,7 @@
 <script>
   import API from '@/axios.js';
   import { createToast } from 'mosha-vue-toastify';
+  import { store } from "@/store.js";
   import EditCartridgeInfo from '@/dialogs/EditCartridgeInfo.vue';
   import CartridgeActions from '@/dialogs/CartridgeActions.vue';
 
@@ -330,7 +331,7 @@
         new_cartridges: [],
         decommissioned_filter: false,
         cartridge_model_filter: null,
-        department_filter: null,
+        department_filter: store.state.user_data.department_id,
       }
     },
 

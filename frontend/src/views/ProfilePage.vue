@@ -42,13 +42,13 @@
                             </template>
                           </v-text-field>
                           <v-text-field
-                            label="Логин"
-                            :model-value="user_data.login"
+                            label="Подразделение"
+                            :model-value="user_data.department_name"
                             readonly=""
                           >
                             <template #prepend-inner>
                               <v-icon
-                                icon="mdi-alpha-l-box-outline"
+                                icon="mdi-alpha-p-box-outline"
                                 style="margin-left: 3px; margin-right: 10px"
                               />
                             </template>
@@ -96,7 +96,7 @@
 <script>
 
   import { mapState } from 'vuex';
-  import API from '@/axios';
+  // import API from '@/axios';
 
   export default {
     name: 'ProfilePage',
@@ -119,31 +119,31 @@
       }
     },
 
-    watch: {
-      staff_id (val) {
-        this.ordersStat(val)
-      },
-    },
-
-    mounted () {
-      if (this.staff_id) {
-        this.ordersStat(this.staff_id)
-      }
-    },
-
-    methods: {
-      ordersStat (staff_id) {
-        setTimeout(() => {
-          API.post('get-my-orders-count', { staff_id })
-            .then(response => {
-              this.orders_count.orders_in = response.data.result.orders_in
-              this.orders_count.orders_done = response.data.result.orders_done
-              this.orders_count.orders_out = response.data.result.orders_out
-            })
-        }, 2000)
-
-      },
-    },
+    // watch: {
+    //   staff_id (val) {
+    //     this.ordersStat(val)
+    //   },
+    // },
+    //
+    // mounted () {
+    //   if (this.staff_id) {
+    //     this.ordersStat(this.staff_id)
+    //   }
+    // },
+    //
+    // methods: {
+    //   ordersStat (staff_id) {
+    //     setTimeout(() => {
+    //       API.post('get-my-orders-count', { staff_id })
+    //         .then(response => {
+    //           this.orders_count.orders_in = response.data.result.orders_in
+    //           this.orders_count.orders_done = response.data.result.orders_done
+    //           this.orders_count.orders_out = response.data.result.orders_out
+    //         })
+    //     }, 2000)
+    //
+    //   },
+    // },
 
   }
 

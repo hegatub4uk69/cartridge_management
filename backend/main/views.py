@@ -62,6 +62,8 @@ def get_user_data(request):
         "login": user.username,
         "post": user.staff.get_post_display(),
         "full_name": f'{user.last_name} {user.first_name} {user.staff.father_name}',
+        "department_id": user.staff.department.pk,
+        "department_name": user.staff.get_department_name(),
     }]
     return JsonResponse({"result": response})
 

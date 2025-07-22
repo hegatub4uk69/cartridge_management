@@ -13,6 +13,8 @@ export const store = createStore({
       staff_full_name: null,
       post: null,
       login: null,
+      department_id: null,
+      department_name: null,
     },
   },
   mutations: {
@@ -21,14 +23,18 @@ export const store = createStore({
       state.user_data.staff_full_name = null
       state.user_data.post = null
       state.user_data.login = null
+      state.user_data.department_id = null
+      state.user_data.department_name = null
     },
     setUserData (state, { login, uid }) {
       state.user_data.login = login
       state.uid = uid
     },
-    setStaffData (state, { staff_full_name, post }) {
+    setStaffData (state, { staff_full_name, post, department_id, department_name }) {
       state.user_data.staff_full_name = staff_full_name
       state.user_data.post = post
+      state.user_data.department_id = department_id
+      state.user_data.department_name = department_name
     },
     setAuthStatus (state, { status }) {
       state.isAuthenticated = status
@@ -110,6 +116,7 @@ export const store = createStore({
             context.commit('setUserData', { login: resp[0]['login'], uid: resp[0]['uid'] })
             context.commit('setStaffData', {
               staff_full_name: resp[0]['full_name'], post: resp[0]['post'],
+              department_id: resp[0]['department_id'], department_name: resp[0]['department_name'],
             })
             resolve()
           }).catch(err => {

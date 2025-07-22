@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Departments(models.Model):
+    name = models.CharField(max_length=150, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Staff(models.Model):
     ADM = 'ADM'
@@ -12,12 +17,10 @@ class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     father_name = models.CharField(max_length=150, null=True, blank=True)
     post = models.CharField(max_length=50, choices=POSTS, null=True, blank=True, default=TECH)
+    department = models.ForeignKey(Departments, on_delete=models.SET_NULL, null=True, blank=True)
 
-class Departments(models.Model):
-    name = models.CharField(max_length=150, null=True, blank=True)
-
-    def __str__(self):
-        return self.name
+    def get_department_name(self):
+        return self.department.name
 
 class Cartridge_Models(models.Model):
     name = models.CharField(max_length=150, null=True, blank=True)
