@@ -150,6 +150,7 @@
                         <v-toolbar>
                           <v-btn
                             class="mx-auto"
+                            :disabled="!new_cartridge_data.model_id || !new_cartridge_data.department_id"
                             prepend-icon="mdi-plus"
                             text="Добавить новый элемент"
                             variant="tonal"
@@ -282,7 +283,7 @@
 <script>
   import API from '@/axios.js';
   import { createToast } from 'mosha-vue-toastify';
-  import { store } from "@/store.js";
+  import { store } from '@/store.js';
   import EditCartridgeInfo from '@/dialogs/EditCartridgeInfo.vue';
   import CartridgeActions from '@/dialogs/CartridgeActions.vue';
 

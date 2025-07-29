@@ -37,7 +37,7 @@ class CartridgesAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     search_fields = ('id', 'model', 'department', 'description')
     list_editable = ('model', 'department', 'description', 'date_of_last_location')
-    list_filter = ('model', 'department', 'description', 'date_added', 'date_of_last_location')
+    list_filter = ('model', 'department', 'date_added', 'date_of_last_location')
 
 @admin.register(Cartridges_History)
 class CartridgesHistoryAdmin(admin.ModelAdmin):

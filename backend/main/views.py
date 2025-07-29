@@ -1,11 +1,6 @@
 import json
-from xmlrpc.client import ResponseError
-
 import pytz
 from django.db import transaction
-from django.db.models import Q
-from django.db.models.expressions import result
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.sessions.models import Session
 from django.contrib.auth.models import User
@@ -13,14 +8,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from .models import Staff, Cartridges, Departments, Cartridge_Models
-from reportlab.graphics.barcode import code128, code39
+from .models import Cartridges, Departments, Cartridge_Models, Cartridges_History
+from reportlab.graphics.barcode import code128
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.fonts import addMapping
 from io import BytesIO
 
 
@@ -28,8 +19,8 @@ def get_staff_id(cookie):
     session_key = cookie
     session = Session.objects.get(pk=session_key)
     decoded_session = session.get_decoded()
-    # staff = Staff.objects.get(account_id=decoded_session['_auth_user_id'])
-    # return staff.pk
+    user = User.objects.get(pk=decoded_session['_auth_user_id'])
+    return {"id": user.pk, "department_id": user.staff.department.pk}
 
 # Авторизация пользователей с получением session cookie
 @csrf_exempt
@@ -41,9 +32,6 @@ def auth(request):
     if user is not None:
         if user.is_active:
             login(request, user)
-            # staff = Staff.objects.get(account_id=user.id)
-            # log = Actions_Logs(key=None, type=0, staff_id=staff.pk, data=None)
-            # log.save()
             return JsonResponse({"result": 'Авторизация прошла успешно!'})
     else:
         return HttpResponse('Unauthorized', status=401)
@@ -54,8 +42,6 @@ def get_user_data(request):
     session_key = request.COOKIES['sessionid']
     session = Session.objects.get(pk=session_key)
     decoded_session = session.get_decoded()
-    # print(decoded_session)
-    # print(decoded_session['_auth_user_id'])
     user = User.objects.get(pk=decoded_session['_auth_user_id'])
     response = [{
         "uid": user.id,
@@ -67,13 +53,11 @@ def get_user_data(request):
     }]
     return JsonResponse({"result": response})
 
-
 # Выход пользователя из системы
 @login_required
 def logout_user(request):
     logout(request)
     return JsonResponse({"result": 'user logout'})
-
 
 # Проверка авторизованного пользователя
 @login_required()
@@ -136,21 +120,27 @@ def get_the_found_cartridges(request):
 @login_required()
 def add_new_cartridge(request):
     data = json.loads(request.body.decode())
-    created_items = []
+    user_data = get_staff_id(request.COOKIES['sessionid'])
 
     with transaction.atomic():
         for item in data:
             for _ in range(item['count']):
                 cartridge = Cartridges(
                     model_id=item['model_id'],
-                    department_id=item['department_id'],
+                    department_id=item['department_id'] if "department_id" in item else user_data['department_id'],
                     description=item['description'] if 'description' in item is not None or '' else None,
                     date_of_last_location=timezone.now(),
                 )
                 cartridge.save()
-                created_items.append({"cartridge": f"{cartridge.model.name} ID_{cartridge.pk}"})
 
-    return JsonResponse({"result": created_items})
+                cartridge_history = Cartridges_History(
+                    cartridge_id=cartridge.pk,
+                    user_id=user_data['id'],
+                    department_id=cartridge.department.pk
+                )
+                cartridge_history.save()
+
+    return JsonResponse({"result": "Картриджи успешно добавлены!"})
 
 @login_required()
 def update_cartridge_data(request):

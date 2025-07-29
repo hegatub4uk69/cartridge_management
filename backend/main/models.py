@@ -36,7 +36,10 @@ class Cartridges(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.model.name} (ID_{self.pk})"
+        if self.model:
+            return f"{self.model.name} (ID_{self.pk})"
+        else:
+            return f"DELETED_MODEL (ID_{self.pk})"
 
 class Cartridges_History(models.Model):
     cartridge = models.ForeignKey(Cartridges, related_name='Cartridges_history_cartridge_id', on_delete=models.SET_NULL, null=True, blank=True)
@@ -45,7 +48,10 @@ class Cartridges_History(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.cartridge.model.name} (ID_{self.cartridge.primary_key})"
+        if self.cartridge:
+            return f"{self.cartridge.model.name} (ID_{self.cartridge.pk})"
+        else:
+            return "null"
 
 class Printers(models.Model):
     name = models.CharField(max_length=150, null=True, blank=True)
@@ -59,4 +65,7 @@ class Cartridges_Printers(models.Model):
     printer = models.ForeignKey(Printers, related_name='Cartridges_Printers_printer_id', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return self.cartridge.model.name
+        if self.cartridge_model:
+            return self.cartridge_model.name
+        else:
+            return "null"
