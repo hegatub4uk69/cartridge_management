@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import Staff, Departments, Cartridges, Cartridges_History, Printers, Cartridges_Printers, Cartridge_Models
+from .models import Staff, Department, Cartridge, CartridgesHistory, Printers, CartridgesPrinter, CartridgeModel
 
 
 class StaffInline(admin.StackedInline):
@@ -15,7 +15,7 @@ class UserAdmin(BaseUserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
-@admin.register(Departments)
+@admin.register(Department)
 class DepartmentsAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     list_display_links = ('id',)
@@ -23,7 +23,7 @@ class DepartmentsAdmin(admin.ModelAdmin):
     list_editable = ('name',)
     list_filter = ('name',)
 
-@admin.register(Cartridge_Models)
+@admin.register(CartridgeModel)
 class CartridgeModelsAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     list_display_links = ('id',)
@@ -31,7 +31,7 @@ class CartridgeModelsAdmin(admin.ModelAdmin):
     list_editable = ('name',)
     list_filter = ('name',)
 
-@admin.register(Cartridges)
+@admin.register(Cartridge)
 class CartridgesAdmin(admin.ModelAdmin):
     list_display = ('id', 'model', 'department', 'description', 'date_of_last_location', 'date_added')
     list_display_links = ('id',)
@@ -39,7 +39,7 @@ class CartridgesAdmin(admin.ModelAdmin):
     list_editable = ('model', 'department', 'description', 'date_of_last_location')
     list_filter = ('model', 'department', 'date_added', 'date_of_last_location')
 
-@admin.register(Cartridges_History)
+@admin.register(CartridgesHistory)
 class CartridgesHistoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'cartridge', 'user', 'department', 'created_at')
     list_display_links = ('id',)
@@ -55,7 +55,7 @@ class PrintersAdmin(admin.ModelAdmin):
     list_editable = ('name', 'type')
     list_filter = ('name', 'type')
 
-@admin.register(Cartridges_Printers)
+@admin.register(CartridgesPrinter)
 class CartridgesPrintersAdmin(admin.ModelAdmin):
     list_display = ('id', 'cartridge_model', 'printer')
     list_display_links = ('id',)

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class Departments(models.Model):
+class Department(models.Model):
     name = models.CharField(max_length=150, null=True, blank=True)
 
     def __str__(self):
@@ -17,20 +17,20 @@ class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     father_name = models.CharField(max_length=150, null=True, blank=True)
     post = models.CharField(max_length=50, choices=POSTS, null=True, blank=True, default=TECH)
-    department = models.ForeignKey(Departments, on_delete=models.SET_NULL, null=True, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
 
     def get_department_name(self):
         return self.department.name
 
-class Cartridge_Models(models.Model):
+class CartridgeModel(models.Model):
     name = models.CharField(max_length=150, null=True, blank=True)
 
     def __str__(self):
         return self.name
 
-class Cartridges(models.Model):
-    model = models.ForeignKey(Cartridge_Models, on_delete=models.SET_NULL, null=True, blank=True)
-    department = models.ForeignKey(Departments, related_name='Cartridges_department_id', null=True, blank=True, on_delete=models.SET_NULL)
+class Cartridge(models.Model):
+    model = models.ForeignKey(CartridgeModel, on_delete=models.SET_NULL, null=True, blank=True)
+    department = models.ForeignKey(Department, related_name='Cartridges_department_id', null=True, blank=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=255, null=True, blank=True)
     date_of_last_location = models.DateTimeField(auto_now=False, auto_now_add=False, null=True, blank=True)
     date_added = models.DateTimeField(auto_now_add=True)
@@ -41,10 +41,10 @@ class Cartridges(models.Model):
         else:
             return f"DELETED_MODEL (ID_{self.pk})"
 
-class Cartridges_History(models.Model):
-    cartridge = models.ForeignKey(Cartridges, related_name='Cartridges_history_cartridge_id', on_delete=models.SET_NULL, null=True, blank=True)
+class CartridgesHistory(models.Model):
+    cartridge = models.ForeignKey(Cartridge, related_name='Cartridges_history_cartridge_id', on_delete=models.SET_NULL, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Cartridges_history_user_id', null=True, blank=True)
-    department = models.ForeignKey(Departments, on_delete=models.SET_NULL, related_name='Cartridges_history_department_id', null=True, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, related_name='Cartridges_history_department_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -60,8 +60,8 @@ class Printers(models.Model):
     def __str__(self):
         return self.name
 
-class Cartridges_Printers(models.Model):
-    cartridge_model = models.ForeignKey(Cartridge_Models, related_name='Cartridges_Printers_cartridge_model_id', on_delete=models.SET_NULL, null=True, blank=True)
+class CartridgesPrinter(models.Model):
+    cartridge_model = models.ForeignKey(CartridgeModel, related_name='Cartridges_Printers_cartridge_model_id', on_delete=models.SET_NULL, null=True, blank=True)
     printer = models.ForeignKey(Printers, related_name='Cartridges_Printers_printer_id', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):

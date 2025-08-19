@@ -1,5 +1,6 @@
 import json
 import pytz
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.contrib.sessions.models import Session
@@ -8,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from .models import Cartridges, Departments, Cartridge_Models, Cartridges_History
+from .models import Cartridge, Department, CartridgeModel, CartridgesHistory
 from reportlab.graphics.barcode import code128
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
@@ -67,7 +68,7 @@ def user_verify(request):
 @login_required()
 def get_cartridges_data(request):
     data = json.loads(request.body.decode())
-    cartridges = Cartridges.objects.all()
+    cartridges = Cartridge.objects.all()
     if data['model_id'] is not None or '':
         cartridges = cartridges.filter(model_id=data['model_id'])
     if data['department_id'] is not None or '':
@@ -89,7 +90,7 @@ def get_cartridge_data_to_edit(request):
         "model_id": c.model_id,
         "department_id": c.department_id,
         "description": c.description,
-    } for c in Cartridges.objects.all().filter(pk=data['id'])]
+    } for c in Cartridge.objects.all().filter(pk=data['id'])]
     return JsonResponse({"result": result})
 
 @login_required()
@@ -97,7 +98,7 @@ def get_departments(request):
     result = [{
         "id": d.pk,
         "name": d.name,
-    } for d in Departments.objects.all()]
+    } for d in Department.objects.all()]
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()
@@ -105,8 +106,25 @@ def get_cartridge_models(request):
     result = [{
         "id": cm.pk,
         "name": cm.name,
-    } for cm in Cartridge_Models.objects.all()]
+    } for cm in CartridgeModel.objects.all()]
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
+
+
+@login_required()
+def get_cartridge_info(request):
+    try:
+        data = json.loads(request.body.decode())
+        cartridge = Cartridge.objects.get(pk=data['id'])
+
+        response_data = {
+            "id": cartridge.pk,
+            "model": cartridge.model.name,
+            "department": cartridge.department.name,
+            "department_date": cartridge.date_of_last_location.strftime("%d.%m.%Y %H:%M:%S"),
+        }
+        return JsonResponse(response_data)
+    except ObjectDoesNotExist:
+        return JsonResponse({"error": "Картридж с указанным ID не найден"}, status=404)
 
 @login_required()
 def get_the_found_cartridges(request):
@@ -114,7 +132,7 @@ def get_the_found_cartridges(request):
     result = [{
         "id": c.pk,
         "name": c.model.name,
-    } for c in Cartridges.objects.all().filter(pk=data['id'])]
+    } for c in Cartridge.objects.all().filter(pk=data['id'])]
     return JsonResponse({"result": sorted(result, key=lambda sort_by: sort_by['id'])})
 
 @login_required()
@@ -125,7 +143,7 @@ def add_new_cartridge(request):
     with transaction.atomic():
         for item in data:
             for _ in range(item['count']):
-                cartridge = Cartridges(
+                cartridge = Cartridge(
                     model_id=item['model_id'],
                     department_id=item['department_id'] if "department_id" in item else user_data['department_id'],
                     description=item['description'] if 'description' in item is not None or '' else None,
@@ -133,7 +151,7 @@ def add_new_cartridge(request):
                 )
                 cartridge.save()
 
-                cartridge_history = Cartridges_History(
+                cartridge_history = CartridgesHistory(
                     cartridge_id=cartridge.pk,
                     user_id=user_data['id'],
                     department_id=cartridge.department.pk
@@ -145,7 +163,7 @@ def add_new_cartridge(request):
 @login_required()
 def update_cartridge_data(request):
     data = json.loads(request.body.decode())
-    cartridge = Cartridges.objects.get(pk=data['id'])
+    cartridge = Cartridge.objects.get(pk=data['id'])
     cartridge.model_id = data['model_id']
     cartridge.department_id = data['department_id']
     cartridge.description = data['description']
