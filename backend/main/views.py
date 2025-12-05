@@ -169,7 +169,7 @@ def update_cartridge_data(request):
     cartridge.description = data['description']
     cartridge.date_of_last_location = timezone.now()
     cartridge.save()
-    return JsonResponse({"result": f'Данные о картридже №{data['id']} успешно изменены!'})
+    return JsonResponse({"result": f'Данные о картридже №{data["id"]} успешно изменены!'})
 
 @login_required()
 def generate_barcode_pdf(request):

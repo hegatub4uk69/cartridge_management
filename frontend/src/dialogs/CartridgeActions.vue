@@ -21,6 +21,7 @@
           <v-container>
             <v-row>
               <v-autocomplete
+                v-if="option === 'issuance'"
                 v-model="department_id"
                 class="pb-4"
                 density="comfortable"
@@ -32,89 +33,63 @@
               />
             </v-row>
             <v-row>
-              <v-card class="mx-auto" width="700px">
-                <v-toolbar>
-                  <v-autocomplete
-                    v-model="founded_value_id"
-                    class="ma-3"
-                    clearable
-                    density="comfortable"
-                    hide-details
-                    item-title="name"
-                    item-value="id"
-                    :items="found_records"
-                    :loading="search_field_loading"
-                    menu-icon=""
-                    placeholder="Введите номер картриджа"
-                    prepend-inner-icon="mdi-magnify"
-                    theme="light"
-                    variant="solo"
-                  />
-                </v-toolbar>
-                <v-list
-                  id="list"
-                  class="overflow-y-auto"
-                  clearable="true"
-                  density="compact"
-                  lines="two"
-                  nav
-                  style="max-height: 450px"
-                >
-                  <v-list-item
-                    v-for="(item, i) in new_cartridges"
-                    :key="i"
+              <v-text-field
+                v-model="cartridge_id_to_search"
+                clearable
+                density="comfortable"
+                hide-details
+                item-title="name"
+                item-value="id"
+                :loading="search_field_loading"
+                menu-icon=""
+                placeholder="Введите номер картриджа"
+                prepend-inner-icon="mdi-magnify"
+                theme="light"
+                variant="solo"
+              >
+                <template #append-inner>
+                  <v-btn
                     color="primary"
-                    :value="item"
-                  >
-                    <template #prepend>
-                      <v-icon
-                        icon="mdi-text-box-outline"
-                        style="font-size: 40px"
-                      />
-                    </template>
-                    <template #title>
-                      <v-list-item-title style="font-size: 18px">{{
-                        getCartridgeItemById(item.model_id).name
-                      }}
-                      </v-list-item-title>
-                    </template>
-                    <template #subtitle>
-                      <v-list-item-subtitle style="font-size: 15px">{{
-                        getDepartmentItemById(item.department_id).name
-                      }}
-                      </v-list-item-subtitle>
-                    </template>
-                    <template #append>
-                      <v-list-item-action class="flex-column align-end">
-                        <v-spacer />
-                        <v-row>
-                          <v-number-input
-                            v-model="item.count"
-                            control-variant="stacked"
-                            density="compact"
-                            hide-details
-                            :min="1"
-                            :model-value="item.count"
-                            @click.stop
-                          />
-                          <v-icon
-                            class="my-auto mx-2"
-                            color="red"
-                            icon="mdi-close-outline"
-                            size="x-large"
-                            @click.stop="removeNewCartridgeItem(i)"
-                          />
-                        </v-row>
-                      </v-list-item-action>
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </v-card>
+                    @click="performSearch(cartridge_id_to_search)"
+                  >Поиск
+                  </v-btn>
+                </template>
+              </v-text-field>
             </v-row>
+          </v-container>
+          <v-container fluid>
+            <v-card>
+              <v-card-text>
+                <v-text-field
+                  :model-value="this.cartridge_info.id"
+                  :readonly="true"
+                  prepend-inner-icon="mdi-ticket-confirmation-outline"
+                  label="Номер картриджа"
+                />
+                <v-text-field
+                  :model-value="this.cartridge_info.model"
+                  :readonly="true"
+                  prepend-inner-icon="mdi-card-text-outline"
+                  label="Модель картриджа"
+                />
+                <v-text-field
+                  :model-value="cartridge_info.department"
+                  :readonly="true"
+                  prepend-inner-icon="mdi-bank-outline"
+                  label="Местоположение"
+                />
+                <v-text-field
+                  :model-value="this.cartridge_info.department_date"
+                  :readonly="true"
+                  prepend-inner-icon="mdi-calendar-clock-outline"
+                  label="Дата местоположения"
+                />
+              </v-card-text>
+            </v-card>
           </v-container>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
+          <v-spacer/>
           <v-btn
             color="blue-darken-1"
             text="Закрыть"
@@ -134,68 +109,94 @@
 </template>
 
 <script>
-  import API from '@/axios.js';
+import API from '@/axios.js';
+import {createToast} from "mosha-vue-toastify";
 
-  export default {
-    'name': 'CartridgeActions',
-    props: {
-      option: {
-        type: String,
-        default: 'issuance',
-      },
+export default {
+  'name': 'CartridgeActions',
+  props: {
+    option: {
+      type: String,
+      default: 'issuance',
     },
+  },
 
-    data () {
-      return {
-        search_field_loading: false,
-        department_id: null,
-        departments: [],
-        founded_value_id: null,
-        found_records: [],
-        timeout: null,
+  data() {
+    return {
+      search_field_loading: false,
+      cartridge_info: {
+        id: null,
+        model: null,
+        department: null,
+        department_date: null
+      },
+      department_id: null,
+      departments: [],
+      cartridge_id_to_search: null,
+      found_records: [],
+      timeout: null,
+    }
+  },
+
+  computed: {
+    dialogTitle() {
+      if (this.option === 'issuance') {
+        return 'Выдача картриджей'
+      } else if (this.option === 'need_refill') {
+        return 'Пометка необходимости в заправке'
+      } else if (this.option === 'decommissioning') {
+        return 'Списание картриджей'
       }
     },
+  },
 
-    computed: {
-      dialogTitle () {
-        if (this.option === 'issuance') {
-          return 'Выдача картриджей'
-        } else if (this.option === 'need_refill') {
-          return 'Пометка необходимости в заправке'
-        } else if (this.option === 'decommissioning') {
-          return 'Списание картриджей'
-        }
-      },
+  watch: {
+    option() {
+      this.getDepartments()
     },
+  },
 
-    watch: {
-      option () {
-        this.getDepartments()
-      },
-    },
+  methods: {
+    performSearch(query) {
+      this.search_field_loading = true
 
-    methods: {
-      performSearch (query) {
-        this.search_field_loading = true
+      if (this.timeout) clearTimeout(this.timeout)
 
-        if (this.timeout) clearTimeout(this.timeout)
-
-        this.timeout = setTimeout(async () => {
-          const response = API.post('get')
-        })
-      },
-
-      getDepartments () {
-        API.post('get-departments')
+      this.timeout = setTimeout(async () => {
+        API.post('get-cartridge-info', {id: query})
           .then(response => {
-            this.departments = response.data.result
+            this.cartridge_info.id = response.data['id']
+            this.cartridge_info.model = response.data['model']
+            this.cartridge_info.department = response.data['department']
+            this.cartridge_info.department_date = response.data['department_date']
+            this.search_field_loading = false
           })
-      },
-      close_dialog () {
-        this.$emit('close-dialog')
-      },
+          .catch(err => {
+              createToast(err.data.error, {
+                showIcon: 'true',
+                showCloseButton: false,
+                type: 'danger',
+                position: 'top-center',
+                timeout: 3000,
+                toastBackgroundColor: '#ff5252',
+              });
+              this.search_field_loading = false
+            }
+          )
+      }, 5)
     },
-  }
+
+    getDepartments() {
+      API.post('get-departments')
+        .then(response => {
+          this.departments = response.data.result
+        })
+    },
+    close_dialog() {
+      this.$emit('close-dialog')
+    },
+  },
+}
 </script>
 
 <style scoped>

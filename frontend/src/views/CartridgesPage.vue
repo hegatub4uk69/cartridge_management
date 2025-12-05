@@ -4,7 +4,13 @@
       <v-row align="center" dense style="padding: 10px">
         <v-col cols="3">
           <div class="d-flex flex-column">
-            <v-btn class="mb-1 text-truncate" color="primary" size="x-large" variant="tonal">Списание картриджей</v-btn>
+            <v-btn
+              class="mb-1 text-truncate"
+              color="primary"
+              size="x-large"
+              variant="tonal"
+              @click="openDialogCartridgeActions('decommissioning')"
+            >Списание картриджей</v-btn>
             <v-btn
               class="text-truncate"
               color="primary"
@@ -17,7 +23,13 @@
         <v-col cols="3">
           <div class="d-flex flex-column">
             <v-btn class="mb-1 text-truncate" color="primary" size="x-large" variant="tonal">Отправка на заправку</v-btn>
-            <v-btn class="text-truncate" color="primary" size="x-large" variant="tonal">Необходима заправка</v-btn>
+            <v-btn
+              class="text-truncate"
+              color="primary"
+              size="x-large"
+              variant="tonal"
+              @click="openDialogCartridgeActions('need_refill')"
+            >Необходима заправка</v-btn>
           </div>
         </v-col>
         <v-col>
@@ -310,13 +322,8 @@
             name: 'Все',
           },
         ],
+        departments: [],
         cartridges: [],
-        departments: [
-          {
-            id: null,
-            name: 'Все',
-          },
-        ],
         validation_new_cartridge: false,
         dialog_edit_cartridge_data: false,
         dialog_cartridge_actions: false,
@@ -361,7 +368,7 @@
 
     created () {
       this.loadCartridgeModels('main')
-      this.loadDepartments('main')
+      this.loadDepartments()
       this.loadCartridgesData()
     },
 
@@ -395,18 +402,12 @@
       loadDepartments (option=null) {
         API.post('get-departments')
           .then(response => {
-            if (option === 'main') {
-              for (const item of response.data.result) {
-                this.departments.push(item)
-              }
-            }
             if (option === null) {
               this.departments = response.data.result
             }
           })
       },
       updateMainData () {
-        this.departments = [{ id: null, name: 'Все' }]
         this.cartridge_models = [{ id: null, name: 'Все' }]
         this.new_cartridge_data = {}
         this.new_cartridges = []
@@ -415,7 +416,7 @@
         this.loadCartridgeModels('main')
         this.cartridge_model_filter = current_cartridge_model
         const current_department = this.department_filter
-        this.loadDepartments('main')
+        this.loadDepartments()
         this.department_filter = current_department
 
         this.loadCartridgesData()
